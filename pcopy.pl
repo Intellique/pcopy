@@ -13,10 +13,9 @@ use Sys::CPU q/cpu_count/;
 Getopt::Long::Configure('bundling');
 setlocale( LC_MESSAGES, 'C' );
 
+my ( $input_dir, $ouput_dir ) = @ARGV;
+
 my $checksum_file = undef;
-my $input_dir     = '/mnt/partage/films/Anime';
-my $ouput_pattern = '/home/guillaume/tmp/%Y%m%d';
-my $ouput_dir     = strftime $ouput_pattern, localtime;
 my $sparse_file   = 0;
 
 my $nb_cpus    = cpu_count();
@@ -27,18 +26,16 @@ my $log_file   = undef;
 my $log_stderr = 0;
 
 GetOptions(
-    'checksum-file=s'  => \$checksum_file,
-    'help|h'           => \&print_help,
-    'input-dir=s'      => \$input_dir,
-    'log-file=s'       => \$log_file,
-    'log-stderr'       => \$log_stderr,
-    'output-dir=s'     => \$ouput_dir,
-    'output-pattern=s' => sub {
-        ( undef, $ouput_pattern ) = @_;
-        $ouput_dir = strftime $ouput_pattern, localtime;
-    },
-    'sparse'           => \$sparse_file,
+    'checksum-file=s' => \$checksum_file,
+    'help|h'          => \&print_help,
+    'log-file=s'      => \$log_file,
+    'log-stderr'      => \$log_stderr,
+    'sparse'          => \$sparse_file,
 );
+
+unless ( defined $ouput_dir ) {
+	print_help();
+}
 
 my $log_fd = $log_stderr ? \*STDERR : \*STDOUT;
 if ( defined $log_file ) {
@@ -57,15 +54,12 @@ sub message {
 }
 
 sub print_help {
-    print "Move file and compare checksum\n";
+    print "Copy files and compare checksums\n";
+	print "Usage: pcopy [options] <src-files> <dest-files>\n";
     print "    --checksum-file <file>     : defer checksum computation after copy and write checksum into <file>\n";
     print "    --help, -h                 : Show this and exit\n";
-    print "    --input-dir <dir>          : read from <dir> instead of '$input_dir'\n";
     print "    --log-file <file>          : log into <file> instead of STDOUT\n";
     print "    --log-stderr               : log into STDERR instead of STDOUT\n";
-    print "    --output-dir <dir>         : write into <dir> instead of '$ouput_dir'\n";
-    print "    --output-pattern <pattern> : write into <pattern> instead of '$ouput_pattern'\n";
-    print "                                 see 'man strftime'\n";
     print "    --sparse                   : support for sparse file (experimental)\n";
     exit;
 }
