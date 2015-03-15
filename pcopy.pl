@@ -84,7 +84,7 @@ sub process {
             return 1;
         }
 
-        message $i_jobs, "➜ create symbolique '$file' to '$new_file'";
+        message $i_jobs, "➜ create symbolic link from '$file' to '$new_file'";
 
         unless ( symlink $link, $new_file ) {
             message $i_jobs, "! error fatal, failed to create link of '$new_file' because $!";
