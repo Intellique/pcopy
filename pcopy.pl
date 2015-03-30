@@ -13,8 +13,6 @@ use Sys::CPU q/cpu_count/;
 Getopt::Long::Configure('bundling');
 setlocale( LC_MESSAGES, 'C' );
 
-my ( $input_dir, $ouput_dir ) = @ARGV;
-
 my $checksum_file = undef;
 my $sparse_file   = 0;
 
@@ -33,8 +31,11 @@ GetOptions(
     'sparse'          => \$sparse_file,
 );
 
+my $ouput_dir  = pop @ARGV;
+my @input_dirs = @ARGV;
+
 unless ( defined $ouput_dir ) {
-	print_help();
+    print_help();
 }
 
 my $log_fd = $log_stderr ? \*STDERR : \*STDOUT;
@@ -55,7 +56,7 @@ sub message {
 
 sub print_help {
     print "Copy files and compare checksums\n";
-	print "Usage: pcopy [options] <src-files> <dest-files>\n";
+    print "Usage: pcopy [options] <src-files...> <dest-files>\n";
     print "    --checksum-file <file>     : defer checksum computation after copy and write checksum into <file>\n";
     print "    --help, -h                 : Show this and exit\n";
     print "    --log-file <file>          : log into <file> instead of STDOUT\n";
@@ -65,7 +66,7 @@ sub print_help {
 }
 
 sub process {
-    my $file = shift;
+    my ( $file, $input_dir ) = @_;
 
     my @info = lstat $file;
 
@@ -132,7 +133,7 @@ sub process {
             my $data_pos = 0;
             my $hole_pos = 512 * $info[12];
 
-            if ( $sparse_file ) {
+            if ($sparse_file) {
                 message( $i_jobs, "⊆ '$new_file' is a sparse file" ) if ( $info[7] > 512 * $info[12] );
 
                 # find start of data
@@ -186,7 +187,7 @@ sub process {
 
                 $pos += $nb_read;
 
-                if ( $sparse_file ) {
+                if ($sparse_file) {
                     if ( $data_pos == $pos ) {
                         seek $file_in, $pos, 4;
                         $hole_pos = tell $file_in;
@@ -331,14 +332,16 @@ sub process {
         closedir $dir;
 
         foreach my $sub_file (@files) {
-            process("$file/$sub_file") and last;
+            process( "$file/$sub_file", $input_dir ) and last;
         }
     }
 
     return 0;
 }
 
-process($input_dir);
+foreach my $input_dir (@input_dirs) {
+    process( $input_dir, $input_dir );
+}
 
 while ( $nb_jobs > 0 ) {
     wait;
