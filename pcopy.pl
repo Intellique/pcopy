@@ -31,10 +31,10 @@ GetOptions(
     'sparse'          => \$sparse_file,
 );
 
-my $ouput_dir  = pop @ARGV;
+my $output_dir = pop @ARGV;
 my @input_dirs = @ARGV;
 
-unless ( defined $ouput_dir ) {
+unless ( defined $output_dir ) {
     print_help();
 }
 
@@ -71,7 +71,7 @@ sub process {
     my @info = lstat $file;
 
     if ( -l $file ) {
-        my $new_file = $ouput_dir . substr( $file, length $input_dir );
+        my $new_file = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
 
         my $link;
         unless ( $link = readlink $file ) {
@@ -87,7 +87,7 @@ sub process {
         }
     }
     elsif ( -b $file ) {
-        my $new_file = $ouput_dir . substr( $file, length $input_dir );
+        my $new_file = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
 
         message $i_jobs, "~ create block device '$file' to '$new_file'";
 
@@ -99,7 +99,7 @@ sub process {
         message $i_jobs, "! error, failed to create block device '$file' to '$new_file'" if $? > 0;
     }
     elsif ( -c $file ) {
-        my $new_file = $ouput_dir . substr( $file, length $input_dir );
+        my $new_file = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
 
         message $i_jobs, "~ create character device '$file' to '$new_file'";
 
@@ -120,7 +120,7 @@ sub process {
         }
 
         if ( $pid == 0 ) {
-            my $new_file = $ouput_dir . substr( $file, length $input_dir );
+            my $new_file = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
 
             message $i_jobs, "@ copy '$file' to '$new_file'";
 
@@ -307,7 +307,8 @@ sub process {
         }
     }
     elsif ( -d $file ) {
-        my $new_dir = $ouput_dir . substr( $file, length $input_dir );
+        my $new_dir = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
+        $new_dir =~ s;^(.*[^/])/*$;$1;;
 
         unless ( -d $new_dir ) {
             $i_jobs++;
@@ -331,6 +332,7 @@ sub process {
         my @files = sort grep { not /^\.{1,2}$/ } readdir $dir;
         closedir $dir;
 
+        $file =~ s;^(.*[^/])/*$;$1;;
         foreach my $sub_file (@files) {
             process( "$file/$sub_file", $input_dir ) and last;
         }
