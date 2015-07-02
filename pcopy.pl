@@ -250,6 +250,10 @@ sub process {
                     message $i_jobs, "! warning while changing permission of '$new_file' because $!";
                 }
 
+                unless ( utime $stat[8], $stat[9], $new_file) {
+                    message $i_jobs, "! warning while changing access and modification time of '$new_file' because $!";
+                }
+
                 exit;
             }
 
@@ -288,6 +292,10 @@ sub process {
 
                 unless ( chown $stat[4], $stat[5], $new_file ) {
                     message $i_jobs, "! warning while changing permission of '$new_file' because $!";
+                }
+
+                unless ( utime $stat[8], $stat[9], $new_file) {
+                    message $i_jobs, "! warning while changing access and modification time of '$new_file' because $!";
                 }
 
                 exit;
