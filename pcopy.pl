@@ -242,7 +242,7 @@ sub process {
                 print {$chck_file} "$src_digest  $new_file\n";
 
                 my @stat = stat $file;
-                unless ( chmod $stat[2] & 0777, $new_file ) {
+                unless ( chmod $stat[2] & 07777, $new_file ) {
                     message $i_jobs, "! warning while changing owner of '$new_file' because $!";
                 }
 
@@ -286,7 +286,7 @@ sub process {
                 message $i_jobs, "= digests match (digest: $src_digest) between '$file' and '$new_file'";
 
                 my @stat = stat $file;
-                unless ( chmod $stat[2] & 0777, $new_file ) {
+                unless ( chmod $stat[2] & 07777, $new_file ) {
                     message $i_jobs, "! warning while changing owner of '$new_file' because $!";
                 }
 
@@ -325,7 +325,7 @@ sub process {
 
             my @stat = stat $file;
 
-            unless ( mkdir $new_dir, $stat[2] & 0777 ) {
+            unless ( mkdir $new_dir, $stat[2] & 07777 ) {
                 message $i_jobs, "! error while creating directory '$new_dir' because $!";
                 return 1;
             }
