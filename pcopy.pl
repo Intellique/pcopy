@@ -59,12 +59,12 @@ sub message {
 
 if ( defined $jobs ) {
     $nb_cpus = $jobs;
+    message 0, "${nb_cpus} cpu(s) will be used";
 }
 else {
     $nb_cpus = cpu_count();
     message 0, "${nb_cpus} cpu(s) detected";
 }
-message 0, "${nb_cpus} cpu(s) will be used";
 
 sub print_help {
     my $nb_detected_cpus = cpu_count();
