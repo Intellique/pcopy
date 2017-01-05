@@ -373,6 +373,37 @@ while ( $nb_jobs > 0 ) {
     $nb_jobs--;
 }
 
+sub update_directory_timestamp {
+    my ( $file, $input_dir ) = @_;
+
+    my @info = lstat $file;
+
+    if ( -d $file ) {
+        my $new_dir = $output_dir . '/' . substr( $file, rindex($input_dir, '/') + 1 );
+        $new_dir =~ s;^(.*[^/])/*$;$1;;
+
+        my $dir;
+        opendir $dir, $file;
+        my @files = sort grep { not /^\.{1,2}$/ } readdir $dir;
+        closedir $dir;
+
+        $file =~ s;^(.*[^/])/*$;$1;;
+        foreach my $sub_file (@files) {
+            my $sub_dir = "$file/$sub_file";
+            next unless -d $sub_dir;
+            update_directory_timestamp( $sub_dir, $input_dir ) and last;
+        }
+
+        unless ( utime $info[8], $info[9], $new_dir ) {
+            message $i_jobs, "! warning while changing access and modification time of '$new_dir' because $!";
+        }
+    }
+}
+
+foreach my $input_dir (@input_dirs) {
+    update_directory_timestamp($input_dir, $input_dir) if -d $input_dir;
+}
+
 exit unless defined $chck_file;
 
 close $chck_file;
