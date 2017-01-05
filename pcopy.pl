@@ -9,16 +9,18 @@ use Getopt::Long;
 use locale;
 use POSIX qw(locale_h strftime);
 use Sys::CPU q/cpu_count/;
+use utf8;
 
 Getopt::Long::Configure('bundling');
 setlocale( LC_MESSAGES, 'C' );
 
 my $checksum_file = undef;
+my $jobs          = undef;
 my $sparse_file   = 0;
 
-my $nb_cpus    = cpu_count();
+my $nb_cpus    = 0;
 my $nb_jobs    = 0;
-my $i_jobs     = 0;
+my $i_jobs     = 1;
 my $chck_file  = undef;
 my $log_file   = undef;
 my $log_stderr = 0;
@@ -26,9 +28,10 @@ my $log_stderr = 0;
 GetOptions(
     'checksum-file=s' => \$checksum_file,
     'help|h'          => \&print_help,
+    'jobs|j=i'        => \$jobs,
     'log-file=s'      => \$log_file,
     'log-stderr'      => \$log_stderr,
-    'sparse'          => \$sparse_file,
+#    'sparse'          => \$sparse_file,
 );
 
 my $output_dir = pop @ARGV;
@@ -54,14 +57,26 @@ sub message {
     printf {$log_fd} "#%03d: %s $message\n", $job, strftime( '%T', localtime );
 }
 
+if ( defined $jobs ) {
+    $nb_cpus = $jobs;
+}
+else {
+    $nb_cpus = cpu_count();
+    message 0, "${nb_cpus} cpu(s) detected";
+}
+message 0, "${nb_cpus} cpu(s) will be used";
+
 sub print_help {
+    my $nb_detected_cpus = cpu_count();
+
     print "Copy files and compare checksums\n";
     print "Usage: pcopy [options] <src-files...> <dest-files>\n";
     print "    --checksum-file <file>     : defer checksum computation after copy and write checksum into <file>\n";
     print "    --help, -h                 : Show this and exit\n";
+    print "    --jobs, -j                 : Specifies the number of jobs (copy) to run simultaneously (detected: ${nb_detected_cpus} cpu(s))\n";
     print "    --log-file <file>          : log into <file> instead of STDOUT\n";
     print "    --log-stderr               : log into STDERR instead of STDOUT\n";
-    print "    --sparse                   : support for sparse file (experimental)\n";
+#    print "    --sparse                   : support for sparse file (experimental)\n";
     exit;
 }
 
